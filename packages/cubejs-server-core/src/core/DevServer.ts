@@ -281,7 +281,7 @@ export class DevServer {
 
     app.get('/playground/test-connection', catchErrors(async (_, res) => {
       const orchestratorApi = this.cubejsServer.getOrchestratorApi({
-        authInfo: null,
+        securityContext: null,
         requestId: ''
       });
 

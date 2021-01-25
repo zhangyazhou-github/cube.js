@@ -93,10 +93,12 @@ export class RefreshScheduler {
     queryingOptions = { timezones: [queryingOptions.timezone || 'UTC'], ...queryingOptions };
     const { throwErrors, ...restOptions } = queryingOptions;
     context = { requestId: `scheduler-${context && context.requestId || uuid()}`, ...context };
+
     this.serverCore.logger('Refresh Scheduler Run', {
-      authInfo: context.authInfo,
+      securityContext: context.securityContext,
       requestId: context.requestId
     });
+
     try {
       const compilerApi = this.serverCore.getCompilerApi(context);
       await Promise.all([
@@ -110,7 +112,7 @@ export class RefreshScheduler {
       if (e.error !== 'Continue wait') {
         this.serverCore.logger('Refresh Scheduler Error', {
           error: e.error || e.stack || e.toString(),
-          authInfo: context.authInfo,
+          securityContext: context.securityContext,
           requestId: context.requestId
         });
       }

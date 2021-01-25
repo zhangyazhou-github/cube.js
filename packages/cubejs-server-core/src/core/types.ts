@@ -31,7 +31,8 @@ export interface OrchestratorOptions {
 }
 
 export interface RequestContext {
-  authInfo: any;
+  // Previously it was called authInfo
+  securityContext: any;
   requestId: string;
 }
 
