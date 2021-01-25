@@ -5,7 +5,6 @@ import uuid from 'uuid/v4';
 import bodyParser from 'body-parser';
 
 import type {
-  Request as ExpressRequest,
   Response, NextFunction,
   Application as ExpressApplication,
   RequestHandler,
@@ -151,15 +150,6 @@ const transformData = (aliasToMemberNameMap, annotation, data, query, queryType)
   return row;
 }));
 
-const coerceForSqlQuery = (query, context: RequestContext) => ({
-  ...query,
-  timeDimensions: query.timeDimensions || [],
-  contextSymbols: {
-    securityContext: context.securityContext && context.securityContext.u || {}
-  },
-  requestId: context.requestId
-});
-
 export interface ApiGatewayOptions {
   standalone: boolean;
   dataSourceStorage: any;
@@ -198,6 +188,9 @@ export class ApiGateway {
 
   protected readonly requestLoggerMiddleware: RequestLoggerMiddlewareFn;
 
+  // Flag to show deprecation for u, only once
+  protected checkAuthDeprecationShown: boolean = false;
+
   public constructor(
     protected readonly apiSecret: string,
     protected readonly compilerApi: any,
@@ -205,8 +198,6 @@ export class ApiGateway {
     protected readonly logger: any,
     options: ApiGatewayOptions,
   ) {
-    options = options || {};
-
     this.dataSourceStorage = options.dataSourceStorage;
     this.refreshScheduler = options.refreshScheduler;
     this.standalone = options.standalone;
@@ -391,7 +382,7 @@ export class ApiGateway {
 
       const sqlQueries = await Promise.all(
         normalizedQueries.map((normalizedQuery) => this.getCompilerApi(context).getSql(
-          coerceForSqlQuery(normalizedQuery, context),
+          this.coerceForSqlQuery(normalizedQuery, context),
           { includeDebugInfo: process.env.NODE_ENV !== 'production' }
         ))
       );
@@ -411,6 +402,35 @@ export class ApiGateway {
     }
   }
 
+  protected coerceForSqlQuery(query, context: RequestContext) {
+    let securityContext = {};
+
+    if (context.securityContext) {
+      if (context.securityContext.u) {
+        if (!this.checkAuthDeprecationShown) {
+          this.logger('check_auth_u_deprecation', {
+            warning: 'Storing security context inside u key for payload was deprecated, please migrate.'
+          });
+
+          this.checkAuthDeprecationShown = true;
+        }
+
+        securityContext = context.securityContext.u;
+      } else {
+        securityContext = context.securityContext;
+      }
+    }
+
+    return {
+      ...query,
+      timeDimensions: query.timeDimensions || [],
+      contextSymbols: {
+        securityContext,
+      },
+      requestId: context.requestId
+    };
+  }
+
   protected async dryRun({ query, context, res }: { query: any, context: RequestContext, res: ResponseResultFn }) {
     const requestStarted = new Date();
 
@@ -419,7 +439,7 @@ export class ApiGateway {
 
       const sqlQueries = await Promise.all<any>(
         normalizedQueries.map((normalizedQuery) => this.getCompilerApi(context).getSql(
-          coerceForSqlQuery(normalizedQuery, context),
+          this.coerceForSqlQuery(normalizedQuery, context),
           { includeDebugInfo: process.env.NODE_ENV !== 'production' }
         ))
       );
@@ -457,7 +477,9 @@ export class ApiGateway {
         ].concat(normalizedQueries.map(
           async (normalizedQuery, index) => {
             const loadRequestSQLStarted = new Date();
-            const sqlQuery = await this.getCompilerApi(context).getSql(coerceForSqlQuery(normalizedQuery, context));
+            const sqlQuery = await this.getCompilerApi(context).getSql(
+              this.coerceForSqlQuery(normalizedQuery, context)
+            );
 
             this.log({
               type: 'Load Request SQL',

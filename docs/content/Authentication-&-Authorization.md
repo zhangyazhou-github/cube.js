@@ -150,8 +150,7 @@ can then use it to query the Cube.js API.
 
 A "security context" is a verified set of claims about the current user that the
 Cube.js server can use to ensure that users only have access to the data that
-they are authorized to access. You can provide a security context by passing the
-`u` param in the JSON payload that you pass to your JWT signing function. For
+they are authorized to access. You can provide a security context by passing JSON payload to your JWT signing function. For
 example if you want to pass the user ID in the security context you could create
 a token with this json structure:
 
