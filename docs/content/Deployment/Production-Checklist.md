@@ -74,6 +74,13 @@ to set up and configure external pre-aggregations storage.
 
 [link-pre-aggregations]: /pre-aggregations#external-pre-aggregations
 
+By default, Cube.js will use `prod_pre_aggregations` as the schema name for
+storing pre-aggregations. This behavior can be modified by the
+`CUBEJS_PRE_AGGREGATIONS_SCHEMA` environent variable; see the [Environment
+Variables][ref-env-vars-general] page for more details.
+
+[ref-env-vars-general]: /reference/environment-variables#general
+
 Currently, we recommend using MySQL for external pre-aggregations storage.
 There is some additional MySQL configuration required to optimize for
 pre-aggregation ingestion and serving. The final configuration may vary
