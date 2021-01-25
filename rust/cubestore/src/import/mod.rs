@@ -1,3 +1,5 @@
+use crate::metastore::ColumnType::HyperLogLog;
+use crate::metastore::HllFlavour;
 use crate::metastore::{Column, ColumnType, ImportFormat, MetaStore};
 use crate::sql::timestamp_from_string;
 use crate::store::{DataFrame, WALDataStore};
@@ -7,6 +9,8 @@ use async_std::io::SeekFrom;
 use async_trait::async_trait;
 use bigdecimal::{BigDecimal, Num};
 use core::mem;
+use cubehll::HllSketch;
+use cubezetasketch::HyperLogLogPlusPlus;
 use futures::{Stream, StreamExt};
 use mockall::automock;
 use std::env;
@@ -89,7 +93,21 @@ impl ImportFormat {
                                 ColumnType::Decimal { .. } => BigDecimal::from_str_radix(value, 10)
                                     .map(|d| TableValue::Decimal(d.to_string()))
                                     .unwrap_or(TableValue::Null),
-                                ColumnType::Bytes => unimplemented!(),
+                                ColumnType::Bytes => TableValue::Bytes(base64::decode(value)?),
+                                ColumnType::HyperLogLog(f) => {
+                                    let data = base64::decode(value)?;
+                                    // TODO: check without allocating memory to improve performance.
+                                    match f {
+                                        HllFlavour::Airlift => {
+                                            HllSketch::read(&data)?;
+                                        }
+                                        HllFlavour::ZetaSketch => {
+                                            HyperLogLogPlusPlus::read(&data)?;
+                                        }
+                                    }
+
+                                    TableValue::Bytes(data)
+                                }
                                 ColumnType::HyperLogLog(_) => unimplemented!(),
                                 ColumnType::Timestamp => timestamp_from_string(value)?,
                                 ColumnType::Float => {
