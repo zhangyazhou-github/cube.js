@@ -434,9 +434,12 @@ with options [from here][link-express-cors-opts].
 
 ### orchestratorOptions
 
-You can pass this object to set advanced options for Cube.js Query Orchestrator.
+<!-- prettier-ignore-start -->
+[[warning | ]]
+| We **strongly** recommend leaving these options set to the defaults. Only **advanced** users should tweak these.
+<!-- prettier-ignore-end -->
 
-_Please note that this is advanced configuration._
+You can pass this object to set advanced options for Cube.js Query Orchestrator.
 
 | Option                                       | Description                                                                                                                                                                                                                                                                                                                                                                                                                      | Default Value           |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
