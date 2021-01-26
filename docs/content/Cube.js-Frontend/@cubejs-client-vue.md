@@ -44,7 +44,7 @@ This slot will be rendered if any error happens while the query is loading or re
 ```js
 <template>
   <div class="hello">
-    <query-renderer :cubejs-api="cubejs" :query="query" v-if="cubejs">
+    <query-renderer :cubejs-api="cubejsApi" :query="query" v-if="cubejs">
       <template v-slot="{ resultSet }">
         <component :is="type" :result="resultSet"/>
       </template>
@@ -63,11 +63,6 @@ import cubejs from '@cubejs-client/core';
 import { QueryRenderer } from '@cubejs-client/vue';
 import ChartRenderer from "./ChartRenderer.vue";
 
-const cubejsApi = cubejs(
-  'YOUR-CUBEJS-API-TOKEN',
-  { apiUrl: 'http://localhost:4000/cubejs-api/v1' },
-);
-
 export default {
   name: "HelloWorld",
   components: {
@@ -75,6 +70,11 @@ export default {
     ChartRenderer
   },
   data() {
+    const cubejsApi = cubejs(
+      'YOUR-CUBEJS-API-TOKEN',
+      { apiUrl: 'http://localhost:4000/cubejs-api/v1' },
+    );
+    
     const query = {
       measures: ["LineItems.count", "LineItems.quantity", "Orders.count"],
       timeDimensions: [
